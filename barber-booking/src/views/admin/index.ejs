@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Админ-панель</title>
+
+  <!-- Подключаем Bootstrap CSS (единожды) -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet" 
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeoE0lHphQ6uO5K6MdY/VWmg6ECdFZjhN0XRESmCb4Tq3UcF" 
+    crossorigin="anonymous"
+  >
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Подключаем Bootstrap Icons -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" 
+    rel="stylesheet"
+  >
+  <!-- Ваш основной CSS (если требуется дополнительная стилизация) -->
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body class="bg-light">
+
+  <div class="container my-5">
+
+    <!-- ======================= Заголовок страницы ======================= -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="h4 fw-bold mb-0">
+        <i class="bi bi-speedometer2 me-2"></i>Админ-панель
+      </h2>
+      <!-- Кнопка «На сайт» (при желании) -->
+      <a href="/" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-house-door me-1"></i>На сайт
+      </a>
+    </div>
+
+    <!-- ======================= Вкладки навигации ======================= -->
+    <% 
+      // Переменная activeTab: 'services' или 'users'. 
+      // Если не задана, по умолчанию 'services'.
+      const tab = typeof activeTab !== 'undefined' ? activeTab : 'services';
+    %>
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item">
+        <a 
+          class="nav-link <%= tab === 'services' ? 'active' : '' %>" 
+          href="/admin"
+        >
+          <i class="bi bi-gear me-1"></i>Управление услугами
+        </a>
+      </li>
+      <li class="nav-item">
+        <a 
+          class="nav-link <%= tab === 'users' ? 'active' : '' %>" 
+          href="/admin/users"
+        >
+          <i class="bi bi-people me-1"></i>Пользователи
+        </a>
+      </li>
+    </ul>
+
+    <!-- ======================= Секция: Управление услугами ======================= -->
+    <% if (tab === 'services') { %>
+
+      <!-- ------------------- Управление категориями ------------------- -->
+      <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="bi bi-folder-plus me-2"></i>
+          <h5 class="mb-0">Категории</h5>
+        </div>
+        <div class="card-body">
+
+          <!-- Форма добавления категории -->
+          <form 
+            class="row g-3 align-items-end mb-4" 
+            method="post" 
+            action="/admin/category/add"
+          >
+            <div class="col-md-8">
+              <label for="categoryName" class="form-label">Название новой категории</label>
+              <input 
+                id="categoryName"
+                name="name" 
+                class="form-control" 
+                placeholder="Введите название" 
+                required
+              >
+            </div>
+            <div class="col-md-4 d-grid">
+              <button class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Добавить категорию
+              </button>
+            </div>
+          </form>
+
+          <!-- Список существующих категорий -->
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-3">#</th>
+                  <th scope="col">Название</th>
+                  <th scope="col" class="text-end pe-3">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (categories.length === 0) { %>
+                  <tr>
+                    <td colspan="3" class="text-center py-3">Нет категорий</td>
+                  </tr>
+                <% } %>
+                <% categories.forEach((cat, idx) => { %>
+                  <tr>
+                    <td class="ps-3"><%= idx + 1 %></td>
+                    <td><%= cat.name %></td>
+                    <td class="text-end pe-3">
+                      <!-- Кнопка удаления категории -->
+                      <form 
+                        method="post" 
+                        action="/admin/category/delete/<%= cat.id %>" 
+                        class="d-inline"
+                        onsubmit="return confirm('Удалить категорию &laquo;<%= cat.name %>&raquo;?');"
+                      >
+                        <button 
+                          type="submit" 
+                          class="btn btn-sm btn-outline-danger"
+                        >
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- ------------------- Конец: Управление категориями ------------------- -->
+
+      <!-- ------------------- Управление подкатегориями ------------------- -->
+      <div class="card mb-5 shadow-sm">
+        <div class="card-header bg-success text-white d-flex align-items-center">
+          <i class="bi bi-folder2-open me-2"></i>
+          <h5 class="mb-0">Подкатегории</h5>
+        </div>
+        <div class="card-body">
+
+          <!-- Форма добавления подкатегории -->
+          <form 
+            class="row g-3 align-items-end mb-4" 
+            method="post" 
+            action="/admin/subcategory/add"
+          >
+            <div class="col-md-5">
+              <label for="subcategoryName" class="form-label">Название подкатегории</label>
+              <input 
+                id="subcategoryName"
+                name="name" 
+                class="form-control" 
+                placeholder="Введите название" 
+                required
+              >
+            </div>
+            <div class="col-md-5">
+              <label for="parentCategory" class="form-label">Родительская категория</label>
+              <select 
+                id="parentCategory" 
+                name="category_id" 
+                class="form-select" 
+                required
+              >
+                <option value="" disabled selected>— Выберите категорию —</option>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat.id %>"><%= cat.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-md-2 d-grid">
+              <button class="btn btn-success">
+                <i class="bi bi-plus-lg me-1"></i>Добавить
+              </button>
+            </div>
+          </form>
+
+          <!-- Список существующих подкатегорий -->
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-3">#</th>
+                  <th scope="col">Название</th>
+                  <th scope="col">Категория</th>
+                  <th scope="col" class="text-end pe-3">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (subcategories.length === 0) { %>
+                  <tr>
+                    <td colspan="4" class="text-center py-3">Нет подкатегорий</td>
+                  </tr>
+                <% } %>
+                <% subcategories.forEach((sub, idx) => { %>
+                  <tr>
+                    <td class="ps-3"><%= idx + 1 %></td>
+                    <td><%= sub.name %></td>
+                    <td><%= sub.Category ? sub.Category.name : '—' %></td>
+                    <td class="text-end pe-3">
+                      <!-- Кнопка удаления подкатегории -->
+                      <form 
+                        method="post" 
+                        action="/admin/subcategory/delete/<%= sub.id %>" 
+                        class="d-inline"
+                        onsubmit="return confirm('Удалить подкатегорию &laquo;<%= sub.name %>&raquo;?');"
+                      >
+                        <button 
+                          type="submit" 
+                          class="btn btn-sm btn-outline-danger"
+                        >
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- ------------------- Конец: Управление подкатегориями ------------------- -->
+
+      <!-- ------------------- Управление услугами ------------------- -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white d-flex align-items-center">
+          <i class="bi bi-scissors me-2"></i>
+          <h5 class="mb-0">Услуги</h5>
+        </div>
+        <div class="card-body">
+
+          <!-- Форма добавления услуги -->
+          <form 
+            class="row g-3 align-items-end mb-4" 
+            method="post" 
+            action="/admin/service/add"
+          >
+            <div class="col-md-4">
+              <label for="serviceName" class="form-label">Название услуги</label>
+              <input 
+                id="serviceName"
+                name="name" 
+                class="form-control" 
+                placeholder="Введите название" 
+                required
+              >
+            </div>
+            <div class="col-md-3">
+              <label for="serviceSubcategory" class="form-label">Подкатегория</label>
+              <select 
+                id="serviceSubcategory" 
+                name="subcategory_id" 
+                class="form-select" 
+                required
+              >
+                <option value="" disabled selected>— Выберите подкатегорию —</option>
+                <% subcategories.forEach(sub => { %>
+                  <option value="<%= sub.id %>"><%= sub.name %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="serviceDuration" class="form-label">Длительность (мин)</label>
+              <input 
+                id="serviceDuration"
+                name="duration_min" 
+                class="form-control" 
+                type="number" 
+                min="1" 
+                placeholder="Например, 30" 
+                required
+              >
+            </div>
+            <div class="col-md-2">
+              <label for="servicePrice" class="form-label">Цена (₽)</label>
+              <input 
+                id="servicePrice"
+                name="price" 
+                class="form-control" 
+                type="number" 
+                min="0" 
+                placeholder="Например, 500" 
+                required
+              >
+            </div>
+            <div class="col-md-1 d-grid">
+              <button class="btn btn-info text-white">
+                <i class="bi bi-plus-lg me-1"></i>Добавить
+              </button>
+            </div>
+          </form>
+
+          <!-- Список существующих услуг -->
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-3">#</th>
+                  <th scope="col">Название</th>
+                  <th scope="col">Подкатегория</th>
+                  <th scope="col">Длительность</th>
+                  <th scope="col">Цена (₽)</th>
+                  <th scope="col" class="text-end pe-3">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (services.length === 0) { %>
+                  <tr>
+                    <td colspan="6" class="text-center py-3">Нет услуг</td>
+                  </tr>
+                <% } %>
+                <% services.forEach((serv, idx) => { %>
+                  <tr>
+                    <td class="ps-3"><%= idx + 1 %></td>
+                    <td><%= serv.name %></td>
+                    <td><%= serv.Subcategory ? serv.Subcategory.name : '—' %></td>
+                    <td><%= serv.duration_min %> мин</td>
+                    <td><%= serv.price %> ₽</td>
+                    <td class="text-end pe-3">
+                      <!-- Кнопка удаления услуги -->
+                      <form 
+                        method="post" 
+                        action="/admin/service/delete/<%= serv.id %>" 
+                        class="d-inline"
+                        onsubmit="return confirm('Удалить услугу &laquo;<%= serv.name %>&raquo;?');"
+                      >
+                        <button 
+                          type="submit" 
+                          class="btn btn-sm btn-outline-danger"
+                        >
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <!-- ------------------- Конец: Управление услугами ------------------- -->
+
+    <% } %>
+    <!-- ======================= Конец секции: Управление услугами ======================= -->
+
+    <!-- ======================= Секция: Пользователи ======================= -->
+    <% if (tab === 'users') { %>
+      <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex align-items-center">
+          <i class="bi bi-people-fill me-2"></i>
+          <h5 class="mb-0">Пользователи</h5>
+        </div>
+        <div class="card-body p-0">
+
+          <!-- Таблица пользователей -->
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-3">#</th>
+                  <th scope="col">Имя</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Роль</th>
+                  <th scope="col" class="text-end pe-3">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (users.length === 0) { %>
+                  <tr>
+                    <td colspan="5" class="text-center py-3">Нет пользователей</td>
+                  </tr>
+                <% } %>
+                <% users.forEach((usr, idx) => { %>
+                  <tr>
+                    <td class="ps-3"><%= idx + 1 %></td>
+                    <td><%= usr.name %></td>
+                    <td><%= usr.email %></td>
+                    <td><%= usr.role %></td>
+                    <td class="text-end pe-3">
+                      <!-- Кнопка «Сделать админом» (если не admin) -->
+                      <% if (usr.role !== 'admin') { %>
+                        <form 
+                          method="post" 
+                          action="/admin/users/promote/<%= usr.id %>" 
+                          class="d-inline me-2"
+                          onsubmit="return confirm('Повысить пользователя &laquo;<%= usr.name %>&raquo; до админа?');"
+                        >
+                          <button 
+                            type="submit" 
+                            class="btn btn-sm btn-outline-success"
+                          >
+                            <i class="bi bi-arrow-up-circle me-1"></i>Админ
+                          </button>
+                        </form>
+                      <% } %>
+                      <!-- Кнопка «Удалить пользователя» -->
+                      <form 
+                        method="post" 
+                        action="/admin/users/delete/<%= usr.id %>" 
+                        class="d-inline"
+                        onsubmit="return confirm('Удалить пользователя &laquo;<%= usr.name %>&raquo;?');"
+                      >
+                        <button 
+                          type="submit" 
+                          class="btn btn-sm btn-outline-danger"
+                        >
+                          <i class="bi bi-trash-fill me-1"></i>Удалить
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    <% } %>
+    <!-- ======================= Конец секции: Пользователи ======================= -->
+
+  </div>
+
+  <!-- Подключаем Bootstrap JS Bundle (Popper + JS) -->
+  <script 
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" 
+    crossorigin="anonymous"
+  ></script>
+</body>
+</html>

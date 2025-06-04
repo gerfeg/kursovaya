@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление слотами</title>
+
+  <!-- Подключаем Bootstrap CSS -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем Bootstrap Icons -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем собственный CSS -->
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+    /* Задаём фон и вертикальное выравнивание */
+    body, html {
+      background-color: #f8f9fa;
+      min-height: 100%;
+    }
+    .slots-container {
+      padding-top: 2rem;
+      padding-bottom: 2rem;
+    }
+    .filter-card {
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+    .filter-card .form-label {
+      font-weight: 600;
+    }
+    .table-section {
+      margin-top: 1.5rem;
+    }
+    .reason-select {
+      width: auto;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+    .action-btn {
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container slots-container">
+
+    <!-- Заголовок и навигация -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="h4 fw-bold mb-0">
+        <i class="bi bi-clock-history me-2"></i>Управление слотами
+      </h2>
+      <a href="/manager" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-journal-check me-1"></i>Бронирования
+      </a>
+    </div>
+
+    <!-- Фильтры: дата и услуга -->
+    <div class="card filter-card mb-4">
+      <div class="card-body">
+        <form class="row g-3 align-items-end" method="get">
+          <!-- Поле выбора даты -->
+          <div class="col-sm-12 col-md-4">
+            <label for="filterDate" class="form-label">Дата</label>
+            <input 
+              type="date" 
+              id="filterDate"
+              name="date" 
+              class="form-control" 
+              value="<%= selected.date || (new Date()).toISOString().slice(0,10) %>"
+            >
+          </div>
+          <!-- Поле выбора услуги -->
+          <div class="col-sm-12 col-md-4">
+            <label for="filterService" class="form-label">Услуга</label>
+            <select 
+              id="filterService" 
+              name="service_id" 
+              class="form-select"
+            >
+              <option value="">Выберите услугу</option>
+              <% services.forEach(s => { %>
+                <option 
+                  value="<%= s.id %>" 
+                  <%= selected.service_id == s.id ? 'selected' : '' %>
+                ><%= s.name %></option>
+              <% }) %>
+            </select>
+          </div>
+          <!-- Кнопка показать -->
+          <div class="col-sm-12 col-md-4 d-grid">
+            <button class="btn btn-primary">
+              <i class="bi bi-funnel-fill me-1"></i>Показать
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Секция таблицы слотов -->
+    <div class="table-section">
+      <% if (slots.length > 0) { %>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Время</th>
+                <th scope="col">Доступность</th>
+                <th scope="col">Причина</th>
+                <th scope="col" class="text-center">Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% slots.forEach(slot => { %>
+                <tr>
+                  <!-- Время слота -->
+                  <td><%= slot.time.slice(0,5) %></td>
+
+                  <!-- Статус доступности -->
+                  <td>
+                    <% if (slot.is_available) { %>
+                      <span class="badge bg-success">Открыто</span>
+                    <% } else { %>
+                      <span class="badge bg-danger">Закрыто</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Отображаем причину, если закрыто -->
+                  <td>
+                    <% if (!slot.is_available && slot.closed_reason) { %>
+                      <%= slot.closed_reason %>
+                    <% } else { %>
+                      —
+                    <% } %>
+                  </td>
+
+                  <!-- Действия: закрыть/открыть -->
+                  <td class="text-center">
+                    <% if (slot.is_available) { %>
+                      <!-- Для закрытия: выбираем причину -->
+                      <select 
+                        name="reason" 
+                        class="form-select form-select-sm reason-select reason-select-<%= slot.id %>"
+                      >
+                        <option value="выходной">Выходной</option>
+                        <option value="отпуск">Отпуск</option>
+                        <option value="другое">Другое</option>
+                      </select>
+                      <button 
+                        class="btn btn-sm btn-danger action-btn toggle-slot-btn" 
+                        data-id="<%= slot.id %>" 
+                        data-action="close"
+                      >
+                        <i class="bi bi-lock-fill me-1"></i>Закрыть
+                      </button>
+                    <% } else { %>
+                      <!-- Кнопка открытия слота -->
+                      <button 
+                        class="btn btn-sm btn-success action-btn toggle-slot-btn" 
+                        data-id="<%= slot.id %>" 
+                        data-action="open"
+                      >
+                        <i class="bi bi-unlock-fill me-1"></i>Открыть
+                      </button>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else if (selected.date && selected.service_id) { %>
+        <!-- Если фильтр задан, но слотов нет -->
+        <div class="alert alert-warning text-center">
+          Нет слотов на выбранную дату и услугу.
+        </div>
+      <% } else { %>
+        <!-- Если ещё не выбраны дата и/или услуга -->
+        <div class="alert alert-info text-center">
+          Выберите дату и услугу для просмотра слотов.
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+
+  <!-- Подключаем Bootstrap JS Bundle (Popper + JS) -->
+  <script 
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+
+  <!-- Скрипт для обработки кнопок закрытия/открытия слотов -->
+  <script>
+    document.querySelectorAll('.toggle-slot-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const slotId = btn.dataset.id;
+        const action = btn.dataset.action;
+        let reason = "";
+
+        // Если закрываем, получаем выбранную причину
+        if (action === "close") {
+          const sel = document.querySelector('.reason-select-' + slotId);
+          reason = sel ? sel.value : "";
+        }
+
+        // Формируем данные формы
+        const formData = new URLSearchParams({
+          slot_id: slotId,
+          action: action,
+          reason: reason
+        });
+
+        try {
+          const res = await fetch('/manager/slots/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+          });
+          const data = await res.json();
+          if (data.success) {
+            location.reload();
+          } else {
+            alert('Ошибка изменения статуса слота');
+          }
+        } catch (err) {
+          alert('Сетевая ошибка. Попробуйте позже.');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

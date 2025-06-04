@@ -1,0 +1,292 @@
+<% 
+  // Получаем сегодняшнюю дату и выбранную дату из query-параметров
+  const today = new Date();
+  const selectedDateObj = selected.date ? new Date(selected.date) : today;
+
+  // Вспомогательная функция для форматирования даты в "YYYY-MM-DD"
+  function formatDate(d) { 
+    return d.toISOString().slice(0, 10); 
+  }
+
+  // Вычисляем предыдущую и следующую даты для навигации
+  const prevDate = new Date(selectedDateObj.getTime() - 24 * 60 * 60 * 1000);
+  const nextDate = new Date(selectedDateObj.getTime() + 24 * 60 * 60 * 1000);
+%>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Расписание</title>
+
+  <!-- Подключаем Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+
+  <!-- Подключаем свой основной CSS (если требуется дополнительная стилизация) -->
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+    /* 1) Стили для фильтров (форма выбора категории/услуги) */
+    .filter-card {
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .filter-card .form-label {
+      font-weight: 600;
+    }
+
+    /* 2) Стили навигации по дням */
+    .day-nav {
+      gap: 1rem;
+      margin-top: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .day-label {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    /* 3) Сетка для карточек слотов */
+    .slots-grid {
+      margin-top: 1rem;
+    }
+    .slot-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .slot-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+
+    <!-- === Заголовок страницы с иконкой === -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0">
+        <i class="bi bi-calendar3 me-2"></i><!-- Bootstrap Icons: calendar -->
+        Расписание услуг
+      </h1>
+      <!-- Кнопка "Обновить" -->
+      <button class="btn btn-outline-primary" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i> Обновить
+      </button>
+    </div>
+
+    <!-- === Блок с фильтрами: категория, подкатегория, услуга === -->
+    <div class="card filter-card mb-4">
+      <div class="card-body">
+        <form method="get" action="/booking/schedule" class="row g-3 align-items-end">
+          <!-- 1) Выбор категории -->
+          <div class="col-sm-12 col-md-4">
+            <label for="category-select" class="form-label">Категория</label>
+            <select 
+              name="category_id" 
+              id="category-select" 
+              class="form-select" 
+              onchange="this.form.submit()"
+            >
+              <option value="">— Выберите категорию —</option>
+              <% categories.forEach(cat => { %>
+                <option 
+                  value="<%= cat.id %>" 
+                  <%= selected.category_id == cat.id ? 'selected' : '' %>
+                >
+                  <%= cat.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <!-- 2) Выбор подкатегории (динамически заполняется при выборе категории) -->
+          <div class="col-sm-12 col-md-4">
+            <label for="subcategory-select" class="form-label">Подкатегория</label>
+            <select 
+              name="subcategory_id" 
+              id="subcategory-select" 
+              class="form-select" 
+              onchange="this.form.submit()"
+            >
+              <option value="">— Выберите подкатегорию —</option>
+              <% if (selected.category_id) {
+                   // Находим текущую категорию и выводим её подкатегории
+                   const parentCat = categories.find(c => c.id == selected.category_id);
+                   parentCat.Subcategories.forEach(sub => { %>
+                <option 
+                  value="<%= sub.id %>" 
+                  <%= selected.subcategory_id == sub.id ? 'selected' : '' %>
+                >
+                  <%= sub.name %>
+                </option>
+              <%   });
+                 } %>
+            </select>
+          </div>
+
+          <!-- 3) Выбор услуги (отображается, когда выбрана категория/подкатегория) -->
+          <div class="col-sm-12 col-md-4">
+            <label for="service-select" class="form-label">Услуга</label>
+            <select 
+              name="service_id" 
+              id="service-select" 
+              class="form-select" 
+              onchange="this.form.submit()"
+            >
+              <option value="">— Выберите услугу —</option>
+              <% services.forEach(serv => { %>
+                <option 
+                  value="<%= serv.id %>" 
+                  <%= selected.service_id == serv.id ? 'selected' : '' %>
+                >
+                  <%= serv.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- === Навигация по дням недели (предыдущий – дата – следующий) === -->
+    <form method="get" action="/booking/schedule" class="d-flex justify-content-center day-nav">
+      <!-- Скрытые поля для сохранения фильтров при смене даты -->
+      <input type="hidden" name="category_id" value="<%= selected.category_id || '' %>">
+      <input type="hidden" name="subcategory_id" value="<%= selected.subcategory_id || '' %>">
+      <input type="hidden" name="service_id" value="<%= selected.service_id || '' %>">
+
+      <!-- Кнопка "Предыдущий день" -->
+      <button 
+        type="submit" 
+        name="date" 
+        value="<%= formatDate(prevDate) %>" 
+        class="btn btn-outline-secondary"
+      >
+        &larr; Предыдущий
+      </button>
+
+      <!-- Отображение текущей даты -->
+      <div class="mx-3 day-label text-primary">
+        <%= formatDate(selectedDateObj) %>
+      </div>
+
+      <!-- Кнопка "Следующий день" -->
+      <button 
+        type="submit" 
+        name="date" 
+        value="<%= formatDate(nextDate) %>" 
+        class="btn btn-outline-secondary"
+      >
+        Следующий &rarr;
+      </button>
+    </form>
+
+    <!-- === Сетка для показа всех слотов текущего дня === -->
+    <div class="row slots-grid">
+      <% if (!slots.length && selected.service_id && selected.date) { %>
+        <!-- Если слотов нет -->
+        <div class="col-12">
+          <div class="alert alert-warning text-center">
+            На <strong><%= formatDate(selectedDateObj) %></strong> нет доступных слотов.
+          </div>
+        </div>
+      <% } %>
+
+      <% slots.forEach(slot => { %>
+        <!-- Разметка одной карточки слота -->
+        <div class="col-6 col-md-4 col-lg-3 mb-4">
+          <div 
+            class="card slot-card h-100 
+                   <% if (slot.status === 'free') { %> border-success <% } %>
+                   <% if (slot.status === 'busy') { %> border-danger <% } %>
+                   <% if (slot.status === 'yours') { %> border-primary <% } %>
+                   <% if (slot.status === 'closed') { %> border-secondary <% } %>
+                   <% if (slot.status === 'pending') { %> border-warning <% } %>
+            "
+          >
+            <!-- Шапка карточки: отображает время слота -->
+            <div class="card-header bg-white text-center py-2">
+              <h5 class="card-title mb-0"><%= slot.time.slice(0,5) %></h5>
+            </div>
+
+            <!-- Тело карточки: кнопка или статус -->
+            <div class="card-body d-flex flex-column justify-content-center align-items-center">
+              <% if (slot.status === 'free') { %>
+                <!-- Слот свободен → показываем кнопку "Забронировать" -->
+                <form action="/booking/schedule/book" method="post" class="w-100">
+                  <input type="hidden" name="service_id" value="<%= selected.service_id %>">
+                  <input type="hidden" name="date" value="<%= selected.date %>">
+                  <input type="hidden" name="slot_id" value="<%= slot.id %>">
+                  <button type="submit" class="btn btn-success w-100">
+                    Забронировать
+                  </button>
+                </form>
+
+              <% } else if (slot.status === 'pending') { %>
+                <!-- Слот ожидает подтверждения -->
+                <span class="badge bg-warning text-dark px-3 py-2">Ожидает</span>
+
+              <% } else if (slot.status === 'yours') { %>
+                <!-- Слот забронирован этим пользователем -->
+                <span class="badge bg-primary px-3 py-2">Ваш слот</span>
+
+              <% } else if (slot.status === 'busy') { %>
+                <!-- Слот занят другим пользователем -->
+                <span class="badge bg-danger px-3 py-2">Занято</span>
+
+              <% } else if (slot.status === 'closed') { %>
+                <!-- Слот закрыт администратором -->
+                <span class="badge bg-secondary px-3 py-2">Закрыто</span>
+                <% if (slot.closed_reason) { %>
+                  <div class="mt-2 text-muted small">
+                    (<%= slot.closed_reason %>)
+                  </div>
+                <% } %>
+
+              <% } else { %>
+                <!-- Любой иной статус -->
+                <span class="badge bg-secondary px-3 py-2">Недоступно</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </div>
+
+  <!-- Подключаем Bootstrap JS (необязательно, если не используем JS компоненты Bootstrap) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Скрипт: асинхронная отправка формы бронирования без перезагрузки страницы -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.slot-card form').forEach(form => {
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+
+          const params = new URLSearchParams(new FormData(form));
+          try {
+            const res = await fetch(form.action, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: params
+            });
+            const result = await res.json();
+
+            if (result.success) {
+              // Если бронь прошла успешно, перезагружаем страницу
+              location.reload();
+            } else {
+              alert(result.message || 'Ошибка бронирования. Попробуйте снова.');
+            }
+          } catch (err) {
+            alert('Сетевая ошибка. Проверьте подключение.');
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

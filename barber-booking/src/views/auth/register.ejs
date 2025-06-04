@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Регистрация</title>
+
+  <!-- Подключаем Bootstrap CSS -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем Bootstrap Icons -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем собственный CSS -->
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+    /* Центрируем форму по вертикали и задаём фон */
+    body, html {
+      height: 100%;
+      background-color: #f8f9fa;
+    }
+    .register-container {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .register-card {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="register-container">
+    <!-- Карточка с формой регистрации -->
+    <div class="card register-card">
+      <div class="card-body">
+        <!-- Заголовок -->
+        <h2 class="card-title text-center mb-4">Создать аккаунт</h2>
+
+        <!-- Сообщение об ошибке (если есть) -->
+        <% if (message && message.length) { %>
+          <div class="alert alert-danger py-2">
+            <i class="bi bi-exclamation-circle-fill me-1"></i>
+            <%= message %>
+          </div>
+        <% } %>
+
+        <!-- Форма регистрации -->
+        <form action="/auth/register" method="post">
+          <!-- Поле Имя -->
+          <div class="mb-3">
+            <label for="inputName" class="form-label">Имя</label>
+            <input
+              id="inputName"
+              type="text"
+              name="name"
+              class="form-control"
+              placeholder="Введите имя"
+              required
+            >
+          </div>
+
+          <!-- Поле Email -->
+          <div class="mb-3">
+            <label for="inputEmail" class="form-label">Email</label>
+            <input
+              id="inputEmail"
+              type="email"
+              name="email"
+              class="form-control"
+              placeholder="example@domain.ru"
+              required
+            >
+          </div>
+
+          <!-- Поле Пароль -->
+          <div class="mb-3">
+            <label for="inputPassword" class="form-label">Пароль</label>
+            <input
+              id="inputPassword"
+              type="password"
+              name="password"
+              class="form-control"
+              placeholder="Введите пароль"
+              required
+            >
+          </div>
+
+          <!-- Кнопка Зарегистрироваться -->
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-person-plus me-1"></i> Зарегистрироваться
+            </button>
+          </div>
+
+          <!-- Ссылка на вход -->
+          <div class="text-center">
+            <span>Уже есть аккаунт? </span>
+            <a href="/auth/login">Войти</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Подключаем Bootstrap JS Bundle (Popper + JS) -->
+  <script 
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+</body>
+</html>

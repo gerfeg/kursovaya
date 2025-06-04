@@ -1,0 +1,217 @@
+<!-- src/views/profile.ejs -->
+<% /* Личный кабинет пользователя */ %>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Личный кабинет</title>
+
+  <!-- Подключаем Bootstrap CSS -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем Bootstrap Icons -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" 
+    rel="stylesheet"
+  >
+  <!-- Подключаем собственный CSS -->
+  <link rel="stylesheet" href="/css/main.css">
+
+  <style>
+    body, html {
+      background-color: #f8f9fa;
+      min-height: 100%;
+    }
+    .profile-header {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+    .profile-info strong {
+      width: 100px;
+      display: inline-block;
+    }
+    .bookings-section {
+      margin-top: 2rem;
+    }
+    .review-form input {
+      width: auto;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container py-5">
+    <!-- Заголовок и кнопка редактирования -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="h4 fw-bold mb-0">
+        <i class="bi bi-person-circle me-2"></i>Мой профиль
+      </h2>
+      <a 
+        href="/profile/edit" 
+        class="btn btn-outline-primary btn-sm"
+      >
+        <i class="bi bi-pencil-fill me-1"></i>Редактировать профиль
+      </a>
+    </div>
+
+    <!-- Информация о пользователе -->
+    <div class="profile-header mb-5">
+      <div class="profile-info d-flex flex-column flex-md-row align-items-start">
+        <div>
+          <p><strong>Имя:</strong> <%= user.name %></p>
+          <p><strong>Фамилия:</strong> <%= user.surname || '-' %></p>
+          <p><strong>Почта:</strong> <%= user.email %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Секция "Мои бронирования" -->
+    <div class="bookings-section">
+      <h3 class="h5 mb-3">
+        <i class="bi bi-journal-bookmark-fill me-2"></i>Мои бронирования
+      </h3>
+
+      <% if (bookings.length === 0) { %>
+        <div class="alert alert-info text-center">
+          У вас нет ни одной брони.
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Услуга</th>
+                <th>Категория</th>
+                <th>Дата</th>
+                <th>Время</th>
+                <th>Статус</th>
+                <th class="text-center">Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% bookings.forEach(b => { %>
+                <tr>
+                  <!-- Название услуги -->
+                  <td>
+                    <i class="bi bi-scissors me-1 text-secondary"></i>
+                    <%= b.Service.name %>
+                  </td>
+
+                  <!-- Категория / Подкатегория -->
+                  <td>
+                    <% if (b.Service.Subcategory && b.Service.Subcategory.Category) { %>
+                      <%= b.Service.Subcategory.Category.name %> / <%= b.Service.Subcategory.name %>
+                    <% } else { %>
+                      —
+                    <% } %>
+                  </td>
+
+                  <!-- Дата бронирования -->
+                  <td><%= b.date %></td>
+
+                  <!-- Время бронирования -->
+                  <td><%= b.time.slice(0,5) %></td>
+
+                  <!-- Статус бронирования -->
+                  <td>
+                    <% if (b.status === 'canceled') { %>
+                      <span class="badge bg-secondary">Отменено</span>
+                    <% } else if (b.status === 'confirmed') { %>
+                      <span class="badge bg-success">Подтверждено</span>
+                    <% } else { %>
+                      <span class="badge bg-warning text-dark">Ожидает</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Действия: отмена и отзыв -->
+                  <td class="text-center">
+                    <% 
+                      // Определяем текущее время и дату брони
+                      const bookingDateTime = new Date(b.date + 'T' + b.time);
+                      const now = new Date();
+                    %>
+
+                    <!-- Кнопка "Отменить", если бронь не отменена и дата в будущем -->
+                    <% if (b.status !== 'canceled' && bookingDateTime > now) { %>
+                      <form 
+                        method="post" 
+                        action="/profile/cancel/<%= b.id %>" 
+                        class="d-inline"
+                        onsubmit="return confirm('Отменить бронь?');"
+                      >
+                        <button 
+                          type="submit" 
+                          class="btn btn-outline-danger btn-sm action-btn"
+                        >
+                          <i class="bi bi-x-circle me-1"></i>Отменить
+                        </button>
+                      </form>
+                    <% } %>
+
+                    <!-- Форма отзыва, если бронь подтверждена, дата прошла и нет отзыва -->
+                    <% if (
+                          b.status === 'confirmed' && 
+                          bookingDateTime < now && 
+                          !b.Review
+                        ) { %>
+                      <form 
+                        method="post" 
+                        action="/profile/review/<%= b.id %>" 
+                        class="d-inline-block review-form mt-2"
+                      >
+                        <input 
+                          type="number" 
+                          name="rating" 
+                          min="1" 
+                          max="5" 
+                          required 
+                          placeholder="Оценка (1-5)" 
+                          class="form-control form-control-sm d-inline reason-select"
+                        >
+                        <input 
+                          type="text" 
+                          name="text" 
+                          maxlength="200" 
+                          required 
+                          placeholder="Комментарий" 
+                          class="form-control form-control-sm d-inline reason-select"
+                        >
+                        <button 
+                          type="submit" 
+                          class="btn btn-outline-primary btn-sm action-btn"
+                        >
+                          <i class="bi bi-chat-left-text me-1"></i>Оставить&nbsp;отзыв
+                        </button>
+                      </form>
+                    <% } else if (b.Review) { %>
+                      <!-- Если отзыв уже оставлен -->
+                      <div class="mt-2">
+                        <i class="bi bi-chat-left-text-fill me-1 text-success"></i>
+                        <span class="text-success">
+                          Отзыв: <%= b.Review.rating %>/5 — <%= b.Review.comment %>
+                        </span>
+                      </div>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Подключаем Bootstrap JS Bundle (Popper + JS) -->
+  <script 
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+  ></script>
+</body>
+</html>

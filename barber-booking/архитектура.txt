@@ -1,0 +1,50 @@
+barber-booking/
+├── src/
+│   ├── config/
+│   │   └── database.js        # Настройка Sequelize + MySQL
+│   │   └── passport.js        # Конфигурация Passport (локальная стратегия)
+│   ├── middleware/
+│   │   └── auth.js            # isAuthenticated, isManager, isAdmin
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── Category.js
+│   │   ├── Subcategory.js
+│   │   ├── Service.js
+│   │   ├── TimeSlot.js
+│   │   ├── Booking.js
+│   │   └── Review.js
+│   ├── public/
+│   │   ├── scss/              # Исходные SCSS (main.scss + импорты)
+│   │   └── css/               # Скомпилированный CSS (main.css)
+│   ├── routes/
+│   │   ├── auth.js            # Регистрация, логин, логаут
+│   │   ├── booking.js         # Главная страница бронирования + AJAX бронирования
+│   │   ├── profile.js         # Личный кабинет (список бронирований + отзыв)
+│   │   ├── manager.js         # Менеджерская панель (бронирования, слоты)
+│   │   ├── admin.js           # Админская панель (услуги, пользователи)
+│   │   └── search.js          # Поиск по сайту
+│   ├── views/
+│   │   ├── layouts/
+│   │   │   └── layout.ejs      # Общий layout (header)
+│   │   ├── partials/
+│   │   │   └── header.ejs      # Навигация + поиск + профиль
+│   │   ├── auth/
+│   │   │   ├── login.ejs
+│   │   │   └── register.ejs
+│   │   ├── booking/
+│   │   │   └── schedule.ejs
+│   │   ├── profile.ejs
+│   │   ├── profile_edit.ejs
+│   │   ├── manager/
+│   │   │   ├── index.ejs       # Бронирования
+│   │   │   └── slots.ejs       # Управление слотами
+│   │   ├── admin/
+│   │   │   ├── index.ejs       # Управление услугами
+│   │   │   └── users.ejs       # Управление пользователями
+│   │   └── search_results.ejs  # Страница результатов поиска
+│   ├── seed.js                # Скрипт наполнения БД (категории/услуги/слоты)
+│   └── index.js               # Точка входа (Express-сервер)
+├── .env                       # Переменные окружения
+├── package.json
+├── package-lock.json
+└── README.md                  # Файл с инстуркцией и используемыми технологиями

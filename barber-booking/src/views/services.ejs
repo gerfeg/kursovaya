@@ -1,0 +1,77 @@
+<% /* src/views/services.ejs */ %>
+
+<div class="container py-5">
+  <!-- Заголовок страницы -->
+  <div class="mb-4 text-center">
+    <h1 class="display-4">Наши услуги</h1>
+    <p class="lead">Ниже представлены все категории, подкатегории и конкретные услуги.</p>
+    <hr class="w-25 mx-auto">
+  </div>
+
+  <!-- Если нет ни одной категории -->
+  <% if (!categories || categories.length === 0) { %>
+    <div class="alert alert-info text-center">
+      <i class="bi bi-info-circle-fill me-1"></i>
+      Пока нет ни одной категории услуг.
+    </div>
+  <% } else { %>
+    <!-- Перебираем все категории -->
+    <% categories.forEach(category => { %>
+      <div class="card mb-5 shadow-sm">
+        <!-- Заголовок категории -->
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <i class="bi bi-folder-fill me-2"></i>
+          <h5 class="mb-0"><%= category.name %></h5>
+        </div>
+        <div class="card-body">
+          <!-- Если у категории нет подкатегорий -->
+          <% if (!category.Subcategories || category.Subcategories.length === 0) { %>
+            <p class="text-muted">Нет подкатегорий для этой категории.</p>
+          <% } else { %>
+            <!-- Перебираем подкатегории -->
+            <% category.Subcategories.forEach(subcat => { %>
+              <div class="mb-4">
+                <!-- Заголовок подкатегории -->
+                <h6 class="text-secondary mb-3">
+                  <i class="bi bi-tag-fill me-1"></i>
+                  <%= subcat.name %>
+                </h6>
+
+                <!-- Если у подкатегории нет услуг -->
+                <% if (!subcat.Services || subcat.Services.length === 0) { %>
+                  <p class="ms-3 text-muted">Нет услуг в этой подкатегории.</p>
+                <% } else { %>
+                  <!-- Таблица услуг -->
+                  <div class="table-responsive ms-3">
+                    <table class="table table-striped table-hover table-bordered mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Название услуги</th>
+                          <th>Длительность (мин)</th>
+                          <th>Цена (₽)</th>
+                          <th>Описание</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% subcat.Services.forEach(svc => { %>
+                          <tr>
+                            <td><%= svc.name %></td>
+                            <td><%= svc.duration_min %></td>
+                            <td><%= parseFloat(svc.price).toFixed(2) %></td>
+                            <td><%= svc.description || '-' %></td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } %>
+              </div>
+              <hr>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
